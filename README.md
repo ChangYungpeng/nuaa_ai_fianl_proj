@@ -1,44 +1,41 @@
-构建数据集：
+本项目为NUAA，AI课设代码。
 
-1、设计json范式
+项目安装：
 
-规范格式：
-
-```json
-[
-  { // 这是第一个问答
-    "instruction": "用户指令（必填）",
-    "input": "用户输入（选填）",
-    "output": "模型回答（必填）",
-    "history": [
-      ["第一轮指令（选填）", "第一轮回答（选填）"],
-      ["第二轮指令（选填）", "第二轮回答（选填）"]
-    ]
-  },
-  { // 这是第二个问答，后面类似
-      xxxxxx
-  }
-]
+```shell
+pip install -r requirements.txt
 ```
 
-对于本项目来说，应该是这种格式：
+微调：
 
-```json
-[
-  {
-    "instruction": "电流对人体的效应由生理参数和电气参数决定。15～100Hz正弦交流电流反应阈的通用值为（）。",
-    "input": "选项A：1.5mA，选项B：2mA，选项C：0.1mA，选项D：0.5mA",
-    "output": "答案：D",
-    "history": []
-  },
-  {
-      xxxxxx
-  }
-]
+```shell
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
+    --model_name_or_path path_to_chatglm \
+    --do_train \
+    --dataset dianli \
+    --template default \
+    --finetuning_type lora \
+    --lora_target query_key_value \
+    --output_dir path_to_checkpoint \
+    --overwrite_cache \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 4 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 5e-5 \
+    --num_train_epochs 3.0 \
+    --plot_loss
 ```
 
-需要设计问题，也就是"instruction"的形式。搜集一下常见的问题形式，设计几个形式。
+测试：
 
-2、生成数据集
+```shell
+CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
+    --model_name_or_path path_to_chatglm \
+    --template default \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint
+```
 
-找一个大模型，最好是中文的，像百川这种。对于每个咱们设计的形式，让大模型根据电力知识和上面的格式，给它个例子，让它生成此形式的指定数量的问答。所有形式的问答放到一个json文件里。
